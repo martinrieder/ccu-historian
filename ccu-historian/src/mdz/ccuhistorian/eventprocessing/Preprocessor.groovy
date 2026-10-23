@@ -38,7 +38,8 @@ public class Preprocessor extends BasicProducer<Event> implements Processor<Even
 		AVG_COMPR(true), 
 		MIN_COMPR(true), 
 		MAX_COMPR(true), 
-		SWD_COMPR(false);
+		SWD_COMPR(false),
+		SWD_INV_COMPR(false);
 		 
 		private boolean clrCont;
 		Type(boolean clearsContinuous) {
@@ -69,7 +70,8 @@ public class Preprocessor extends BasicProducer<Event> implements Processor<Even
 					case Type.AVG_COMPR:
 					case Type.MIN_COMPR:
 					case Type.MAX_COMPR: applyIntervalProcessor(event, type, param); break
-					case Type.SWD_COMPR: applySwingingDoor(event, type, param/2.0); break
+					case Type.SWD_COMPR:
+					case Type.SWD_INV_COMPR: applySwingingDoor(event, type, param/2.0); break
 				}
 			} else {
 				// forward unmodified
@@ -82,10 +84,14 @@ public class Preprocessor extends BasicProducer<Event> implements Processor<Even
 	}
 	
 	public void flush(DataPointIdentifier id) {
-		// flush swinging door processor
+		// flush swinging door processors
 		def p=swingingDoorProcessors[id]
 		if (p!=null) {
 			p.flush()
+		}
+		def pi=swingingDoorInvProcessors[id]
+		if (pi!=null) {
+			pi.flush()
 		}
 	}
 	
@@ -94,6 +100,8 @@ public class Preprocessor extends BasicProducer<Event> implements Processor<Even
 		// close swinging door processors
 		swingingDoorProcessors.values().each { it.close() }
 		swingingDoorProcessors.clear()
+		swingingDoorInvProcessors.values().each { it.close() }
+		swingingDoorInvProcessors.clear()
 	}
 
 	private Map<DataPointIdentifier, ProcessValue> deltaPreviousValues=[:]
@@ -262,6 +270,7 @@ public class Preprocessor extends BasicProducer<Event> implements Processor<Even
 	}
 
 	private Map<DataPointIdentifier, SwingingDoorProcessor> swingingDoorProcessors=[:]
+	private Map<DataPointIdentifier, SwingingDoorInverseSlopeProcessor> swingingDoorInvProcessors=[:]
 	
 	private void applySwingingDoor(Event event, Type type, double deviation) {
 		log.finer "Preprocessor: Applying swinging door compression to $event" 
@@ -275,18 +284,34 @@ public class Preprocessor extends BasicProducer<Event> implements Processor<Even
 			produce event
 			return
 		}
-		SwingingDoorProcessor swdp=swingingDoorProcessors[event.dataPoint.id]
-		if (swdp==null || swdp.deviation!=deviation) {
-			// replace previous processor?
-			if (swdp!=null) {
-				swdp.close()
+		if (type==Type.SWD_INV_COMPR) {
+			SwingingDoorInverseSlopeProcessor swdp=swingingDoorInvProcessors[event.dataPoint.id]
+			if (swdp==null || swdp.deviation!=deviation) {
+				// replace previous processor?
+				if (swdp!=null) {
+					swdp.close()
+				}
+				// create new processor
+				swdp=[]
+				swdp.deviation=deviation
+				swdp.addConsumer { Event e -> produce e }
+				swingingDoorInvProcessors[event.dataPoint.id]=swdp
 			}
-			// create new processor
-			swdp=[]
-			swdp.deviation=deviation
-			swdp.addConsumer { Event e -> produce e }
-			swingingDoorProcessors[event.dataPoint.id]=swdp
+			swdp.consume event
+		} else {
+			SwingingDoorProcessor swdp=swingingDoorProcessors[event.dataPoint.id]
+			if (swdp==null || swdp.deviation!=deviation) {
+				// replace previous processor?
+				if (swdp!=null) {
+					swdp.close()
+				}
+				// create new processor
+				swdp=[]
+				swdp.deviation=deviation
+				swdp.addConsumer { Event e -> produce e }
+				swingingDoorProcessors[event.dataPoint.id]=swdp
+			}
+			swdp.consume event
 		}
-		swdp.consume event
 	}
 }

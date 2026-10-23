@@ -31,6 +31,7 @@ private final static preprocTypes = [
 	4:'Minimum',
 	5:'Maximum',
 	6:'Sw.Do.K.',
+	7:'Sw.Do.K. inv.',
 ] as TreeMap
 
 // setup page
@@ -201,6 +202,7 @@ renderer.content={
 							li { a href:'#', id:'select-preproc-4', 'Minimum' } 
 							li { a href:'#', id:'select-preproc-5', 'Maximum' } 
 							li { a href:'#', id:'select-preproc-6', 'Sw.Do.K.' } 
+							li { a href:'#', id:'select-preproc-7', 'Sw.Do.K. inv.' } 
 						}
 					}
 					div(class:'input-group') {
@@ -367,7 +369,7 @@ renderer.end={
 		});
 
 		// set preprocessing
-		for (let t=0; t<=6; t++) {
+		for (let t=0; t<=7; t++) {
 			$('#select-preproc-' + t).on('click', function(e) {
 				$('#dp-table tbody > tr:visible td:nth-child(11) > select').val(t);
 			});
