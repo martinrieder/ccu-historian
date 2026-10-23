@@ -28,6 +28,7 @@ import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import groovy.sql.Sql
 import groovy.util.logging.Log
+import org.h2.server.web.WebServer
 import org.h2.tools.Server
 import mdz.hc.DataPoint
 import mdz.hc.DataPointIdentifier
@@ -72,12 +73,17 @@ public class Database implements Storage {
 				prepareDatabase()
 				if (config.webEnable) {
 					log.info 'Starting database web server'
+					// H2 2.2 requires the admin password of the web console to be a salted
+					// SHA-256 hash (CVE-2022-45868). encodeAdminPassword() enforces a minimum
+					// length of 12 characters.
+					if (config.password.length()<12)
+						throw new IllegalArgumentException('database.password must be at least 12 characters, if the web console is enabled (H2 2.2 requirement)')
 					def args=[
 						'-ifExists',
 						'-webPort',
 						config.webPort as String,
 						'-webAdminPassword',
-						config.password
+						WebServer.encodeAdminPassword(config.password)
 					]
 					if (config.webAllowOthers) args << '-webAllowOthers'
 					if (config.webExternalNames) {

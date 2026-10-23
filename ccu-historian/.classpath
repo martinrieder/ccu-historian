@@ -14,7 +14,7 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="/external-libs/jfreesvg-3.4.2/jfreesvg-3.4.2.jar"/>
-	<classpathentry kind="lib" path="/external-libs/h2-2.1.214/h2-2.1.214.jar"/>
+	<classpathentry kind="lib" path="/external-libs/h2-2.2.224/h2-2.2.224.jar"/>
 	<classpathentry kind="lib" path="/external-libs/cron-utils-9.2.0/cron-utils-9.2.0.jar" sourcepath="/external-libs/cron-utils-9.2.0/cron-utils-9.2.0-sources.jar">
 		<attributes>
 			<attribute name="javadoc_location" value="jar:platform:/resource/external-libs/cron-utils-9.2.0/cron-utils-9.2.0-javadoc.jar!/"/>
